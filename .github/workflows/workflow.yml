@@ -31,4 +31,21 @@ jobs:
           AWS_REGION: ${{ secrets.AWS_REGION }}
           EC2_INSTANCE_PUBLIC_DNS: ${{ secrets.EC2_INSTANCE_PUBLIC_DNS }}
         run: |
+          # Update the package list and install AWS CLI
+          sudo apt-get update
+          sudo apt-get install -y awscli
           
+          # Create the SSH directory and set permissions
+          mkdir -p ~/.ssh
+          
+          # Write the SSH private key from GitHub Secrets to ~/.ssh/id_rsa
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          
+          # Set the correct permissions on the SSH private key
+          chmod 600 ~/.ssh/id_rsa
+          
+          # Add the EC2 instance to the known hosts to avoid SSH prompts
+          ssh-keyscan -H ${{ secrets.EC2_INSTANCE_PUBLIC_DNS }} >> ~/.ssh/known_hosts
+          
+          # Securely copy the build files to the EC2 instance
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -r build/* ec2-user@${{ secrets.EC2_INSTANCE_PUBLIC_DNS }}:/var/www/html/
