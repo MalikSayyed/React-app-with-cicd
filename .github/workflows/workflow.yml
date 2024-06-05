@@ -48,4 +48,4 @@ jobs:
           ssh-keyscan -H ${{ secrets.EC2_INSTANCE_PUBLIC_DNS }} >> ~/.ssh/known_hosts
           
           # Securely copy the build files to the EC2 instance
-          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -r build/* ec2-user@${{ secrets.EC2_INSTANCE_PUBLIC_DNS }}:/var/www/html/
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -r build/* ubuntur@${{ secrets.EC2_INSTANCE_PUBLIC_DNS }}:/var/www/html/
