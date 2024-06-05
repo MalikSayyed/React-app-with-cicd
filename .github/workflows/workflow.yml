@@ -31,7 +31,7 @@ jobs:
   run: |
     # Update the package list and install necessary packages
     sudo apt-get update
-    sudo apt-get install -y awscli nginx
+    sudo apt-get install -y awscli
 
     # Create the SSH directory and set permissions
     mkdir -p ~/.ssh
