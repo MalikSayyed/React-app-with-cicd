@@ -1,4 +1,5 @@
 name: Deploy to AWS EC2
+
 on:
   push:
     branches:
@@ -22,47 +23,29 @@ jobs:
 
       - name: Build React app
         run: npm run build
-- name: Deploy to EC2
-  env:
-    AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-    AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-    AWS_REGION: ${{ secrets.AWS_REGION }}
-    EC2_INSTANCE_PUBLIC_DNS: ${{ secrets.EC2_INSTANCE_PUBLIC_DNS }}
-  run: |
-    # Update the package list and install necessary packages
-    sudo apt-get update
-    sudo apt-get install -y awscli
 
-    # Create the SSH directory and set permissions
-    mkdir -p ~/.ssh
-
-    # Write the SSH private key from GitHub Secrets to ~/.ssh/id_rsa
-    echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
-
-    # Set the correct permissions on the SSH private key
-    chmod 600 ~/.ssh/id_rsa
-
-    # Add the EC2 instance to the known hosts to avoid SSH prompts
-    ssh-keyscan -H ${{ secrets.EC2_INSTANCE_PUBLIC_DNS }} >> ~/.ssh/known_hosts
-
-    # Securely copy the build files to the EC2 instance
-    scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -r build/* ubuntu@${{ secrets.EC2_INSTANCE_PUBLIC_DNS }}:/var/www/html/
-
-    # Connect to EC2 and verify file transfer and permissions
-    ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@${{ secrets.EC2_INSTANCE_PUBLIC_DNS }} << 'EOF'
-      # Check if the files are in the correct directory
-      ls -la /var/www/html/
-
-      # Ensure correct permissions
-      sudo chmod -R 755 /var/www/html/
-      sudo chown -R www-data:www-data /var/www/html/
-
-      # Restart Nginx to serve the new build
-      sudo systemctl restart nginx
-
-      # Check the status of Nginx
-      sudo systemctl status nginx
-
-      # Check the Nginx configuration
-      sudo nginx -t
-    EOF
+      - name: Deploy to EC2
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          EC2_INSTANCE_PUBLIC_DNS: ${{ secrets.EC2_INSTANCE_PUBLIC_DNS }}
+        run: |
+          # Update the package list and install AWS CLI
+          sudo apt-get update
+          sudo apt-get install -y awscli
+          
+          # Create the SSH directory and set permissions
+          mkdir -p ~/.ssh
+          
+          # Write the SSH private key from GitHub Secrets to ~/.ssh/id_rsa
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          
+          # Set the correct permissions on the SSH private key
+          chmod 600 ~/.ssh/id_rsa
+          
+          # Add the EC2 instance to the known hosts to avoid SSH prompts
+          ssh-keyscan -H ${{ secrets.EC2_INSTANCE_PUBLIC_DNS }} >> ~/.ssh/known_hosts
+          
+          # Securely copy the build files to the EC2 instance
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -r build/* ubuntu@${{ secrets.EC2_INSTANCE_PUBLIC_DNS }}:/var/www/html/
