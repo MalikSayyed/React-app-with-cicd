@@ -31,3 +31,8 @@ jobs:
           AWS_REGION: ${{ secrets.AWS_REGION }}
           EC2_INSTANCE_ID: ${{ secrets.EC2_INSTANCE_ID }}
         run: |
+          sudo apt-get update
+          sudo apt-get install -y awscli
+          sudo apt-get install -y sshpass
+          ssh-keyscan -H $ec2-3-212-218-124.compute-1.amazonaws.com >> ~/.ssh/known_hosts
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -r build/* $ubuntu@$ec2-3-212-218-124.compute-1.amazonaws.com:/var/www/html/
