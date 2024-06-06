@@ -1,8 +1,10 @@
-name: Deploy to EC2
+name: Deploy to AWS EC2
+
 on:
   push:
     branches:
-      - main #branch on which your code is pushed
+      - main
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -11,23 +13,39 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: executing remote ssh commands using password
-        uses: appleboy/ssh-action@v0.1.5
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          password: ${{ secrets.EC2_PASSWORD }}
-          port: ${{ secrets.PORT }}
-          script: |
-            # sudo yum install git
-            ls  /home/ubuntu/
-            sudo yum update
-            sudo yum install git -y
-            sudo yum install -y nodejs
-            git clone https://<git access token>@https://github.com/MalikSayyed/React-app-with-cicd.git
-            cd /home/ubuntu  
-            # nvm use 18
-            npm i
-            npm i sharp
-            npm run build
-            nohup npm start &
+          node-version: '14'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build React app
+        run: npm run build
+
+      - name: Deploy to EC2
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          EC2_INSTANCE_PUBLIC_DNS: ${{ secrets.EC2_INSTANCE_PUBLIC_DNS }}
+        run: |
+          # Update the package list and install AWS CLI
+          sudo apt-get update
+          sudo apt-get install -y awscli
+          
+          # Create the SSH directory and set permissions
+          mkdir -p ~/.ssh
+          
+          # Write the SSH private key from GitHub Secrets to ~/.ssh/id_rsa
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          
+          # Set the correct permissions on the SSH private key
+          chmod 600 ~/.ssh/id_rsa
+          
+          # Add the EC2 instance to the known hosts to avoid SSH prompts
+          ssh-keyscan -H ${{ secrets.EC2_INSTANCE_PUBLIC_DNS }} >> ~/.ssh/known_hosts
+          
+          # Securely copy the build files to the EC2 instance
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -r build/* ubuntu@${{ secrets.EC2_INSTANCE_PUBLIC_DNS }}:/var/www/html/
