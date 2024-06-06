@@ -31,6 +31,6 @@ jobs:
         SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
       run: |
         echo "$SSH_KEY" > M-keypair.pem
-        chmod 600 key.pem
-        scp -o StrictHostKeyChecking=no -i key.pem -r build/* $ubuntu@$HOST:/var/www/react-app/
-        ssh -o StrictHostKeyChecking=no -i key.pem $ubuntu@$HOST "sudo systemctl reload nginx"
+        chmod 600 M-keypair.pem
+        scp -o StrictHostKeyChecking=no -i M-keypair.pem -r build/* $ubuntu@$HOST:/var/www/react-app/
+        ssh -o StrictHostKeyChecking=no -i M-keypair $ubuntu@$HOST "sudo systemctl reload nginx"
