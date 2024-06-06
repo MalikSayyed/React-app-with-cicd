@@ -1,4 +1,4 @@
-name: Deploy to AWS EC2
+name: Deploy to EC2
 
 on:
   push:
@@ -25,27 +25,11 @@ jobs:
         run: npm run build
 
       - name: Deploy to EC2
+        uses: easingthemes/ssh-deploy@v2.1.5
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          EC2_INSTANCE_PUBLIC_DNS: ${{ secrets.EC2_INSTANCE_PUBLIC_DNS }}
-        run: |
-          # Update the package list and install AWS CLI
-          sudo apt-get update
-          sudo apt-get install -y awscli
-          
-          # Create the SSH directory and set permissions
-          mkdir -p ~/.ssh
-          
-          # Write the SSH private key from GitHub Secrets to ~/.ssh/id_rsa
-          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
-          
-          # Set the correct permissions on the SSH private key
-          chmod 600 ~/.ssh/id_rsa
-          
-          # Add the EC2 instance to the known hosts to avoid SSH prompts
-          ssh-keyscan -H ${{ secrets.EC2_INSTANCE_PUBLIC_DNS }} >> ~/.ssh/known_hosts
-          
-          # Securely copy the build files to the EC2 instance
-          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -r build/* ubuntu@${{ secrets.EC2_INSTANCE_PUBLIC_DNS }}:/var/www/html/
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          ARGS: "-rltgoDzvO"
+          SOURCE: "build/"
+          REMOTE_HOST: "your-ec2-public-dns"
+          REMOTE_USER: "ubuntu"
+          TARGET: "/var/www/html"
